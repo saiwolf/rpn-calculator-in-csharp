@@ -8,15 +8,9 @@ namespace RPNCalc.Lib;
 /// <param name="debug">If true, enables debug mode for the calculator.</param>
 /// <remarks>
 /// <para>This calculator implements the Reverse Polish Notation (RPN) logic for evaluating mathematical expressions.</para>
-/// <para>This class implements <see cref="IDisposable"/> to blank <see cref="Stack"/> and <see cref="Vars"/> on disposal.</para>
 /// </remarks>
-public class RPN(bool debug = false) : IDisposable
+public class RPN(bool debug = false)
 {
-    /// <summary>
-    /// <para>Indicates whether the object has been disposed.</para>
-    /// </summary>
-    private bool _disposed;
-
     /// <summary>
     /// <para>The main stack. Numbers and operators go here.</para>
     /// </summary>
@@ -261,38 +255,13 @@ public class RPN(bool debug = false) : IDisposable
     }
 
     /// <summary>
-    /// <para>Disposes of the resources used by the RPN class.</para>
-    /// </summary>
-    /// <param name="disposing"><para><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</para></param>
-    protected virtual void Dispose(bool disposing)
-    {
-        if (_disposed) return;
-
-        if (disposing)
-        {
-            Wipe();
-        }
-
-        _disposed = true;
-    }
-
-    /// <summary>
     /// <para>Finalizer for the RPN class.</para>
+    /// <para>Blanks <see cref="Stack"/> and <see cref="Vars"/> when <see cref="RPN"/> is finalized.</para>
     /// </summary>
     ~RPN()
     {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        Dispose(disposing: true);
-    }
-
-    /// <summary>
-    /// <para>Disposes of the resources used by the RPN class.</para>
-    /// </summary>
-    public void Dispose()
-    {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
+        // Blank the stack and vars when the object is finalized.
+        Wipe();
     }
 }
 
