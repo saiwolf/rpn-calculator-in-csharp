@@ -13,12 +13,30 @@ namespace RPNCalc.Lib;
 /// </remarks>
 public class RPN(bool debug = false, ILogger<RPN>? logger = null)
 {
+
+    /// <summary>
+    /// <para>Initializes a new instance of the <see cref="RPN"/> class with debug mode disabled and no logger.</para>
+    /// </summary>
+    public RPN() : this(false, null)
+    { }
+
+    /// <summary>
+    /// <para>Destructor for the <see cref="RPN"/> class.</para>
+    /// </summary>
+    /// <remarks>
+    /// <para>Blanks <see cref="Stack"/> and <see cref="Vars"/> when <see cref="RPN"/> is finalized.</para>
+    /// </remarks>
+    ~RPN()
+    {
+        Wipe();
+    }
+
     /// <summary>
     /// <para>Logger for the RPN class.</para>
     /// <para>Defaults to null logging via <see cref="NullLogger{T}"/> if 
     /// an <see cref="ILogger"/> instance is not provided in the constructor.</para>
     /// </summary>
-    private ILogger<RPN> _logger = logger ?? NullLogger<RPN>.Instance;
+    private readonly ILogger<RPN> _logger = logger ?? NullLogger<RPN>.Instance;
 
     /// <summary>
     /// <para>The main stack. Numbers and operators go here.</para>
@@ -42,8 +60,8 @@ public class RPN(bool debug = false, ILogger<RPN>? logger = null)
     /// <summary>
     /// <para>Indicates whether debug mode is enabled.</para>
     /// </summary>
-    public bool Debug => debug;
-        
+    public readonly bool Debug = debug;    
+
     /// <summary>
     /// <para>Inserts a value at the top of <see cref="Stack"/>.</para>
     /// </summary>
@@ -280,15 +298,6 @@ public class RPN(bool debug = false, ILogger<RPN>? logger = null)
             _logger.LogError(ex, "An error occurred while parsing the expression: {Message}", ex.Message);
             throw;
         }
-
-    /// <summary>
-    /// <para>Finalizer for the RPN class.</para>
-    /// <para>Blanks <see cref="Stack"/> and <see cref="Vars"/> when <see cref="RPN"/> is finalized.</para>
-    /// </summary>
-    ~RPN()
-    {
-        // Blank the stack and vars when the object is finalized.
-        Wipe();
-    }
+    }    
 }
 
