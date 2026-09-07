@@ -199,69 +199,87 @@ public class RPN(bool debug = false, ILogger<RPN>? logger = null)
     /// <param name="expression">Equation in RPN format to parse</param>    
     public void Parse(string expression)
     {
-        ArgumentException.ThrowIfNullOrEmpty(expression, nameof(expression));
-
-        // Break up the expression into an array
-        // using a space as the delimiter.
-        string[] tokens = expression.Split(' ');
-        // If there are no tokens, then print a message
-        // abort.
-        if (tokens.Length == 0)
+        try
         {
-            // Log a message and abort.
-            throw new InvalidOperationException("No tokens found in the expression.");
-        }
+            ArgumentException.ThrowIfNullOrEmpty(expression, nameof(expression));
 
-        // Iterate over the expression array created above.
-        foreach (string token in tokens)
-        {
-            if (double.TryParse(token, out double result))
+            // Break up the expression into an array
+            // using a space as the delimiter.
+            string[] tokens = expression.Split(' ');
+            // If there are no tokens, then print a message
+            // abort.
+            if (tokens.Length == 0)
             {
-                if (tokens.Last() == result.ToString())
-                    throw new Exception("Last item needs to be an operator!");
-                else
-                    Stack.Push(result.ToString());
+                // Log a message and abort.
+                throw new InvalidOperationException("No tokens found in the expression.");
             }
-            else
+
+            // Iterate over the expression array created above.
+            foreach (string token in tokens)
             {
-                switch (token)
+                if (double.TryParse(token, out double result))
                 {
-                    case "x" or "X":
-                        Exchange();
-                        break;
-                    case "?":
-                        StackDump();
-                        break;
-                    case "&":
-                        VarDump();
-                        break;
-                    case "+":
-                        Add();
-                        break;
-                    case "-":
-                        Sub();
-                        break;
-                    case "*":
-                        Mul();
-                        break;
-                    case "/":
-                        Div();
-                        break;
-                    case "^":
-                        Exponent();
-                        break;
-                    default:
-                        if (token[0] == '!')
-                            Vars.Add(token[1..], Peek()); // Store top of stack in tempVar
-                        else if (token[0] == '@')
-                            Push(Vars[token[1..]] ?? string.Empty); // Retrieve tempVar and push it to the stack
-                        else // `token` did not match, so it's invalid.
-                            throw new Exception($"Unknown operator or number: `{token}`");
-                        break;
+                    if (tokens.Last() == result.ToString())
+                        throw new InvalidOperationException("Invalid last token. The last token in the expression must be an operator.");
+                    else
+                        Stack.Push(result.ToString());
+                }
+                else
+                {
+                    switch (token)
+                    {
+                        case "x" or "X":
+                            Exchange();
+                            break;
+                        case "?":
+                            StackDump();
+                            break;
+                        case "&":
+                            VarDump();
+                            break;
+                        case "+":
+                            Add();
+                            break;
+                        case "-":
+                            Sub();
+                            break;
+                        case "*":
+                            Mul();
+                            break;
+                        case "/":
+                            Div();
+                            break;
+                        case "^":
+                            Exponent();
+                            break;
+                        default:
+                            if (token[0] == '!')
+                                Vars.Add(token[1..], Peek()); // Store top of stack in tempVar
+                            else if (token[0] == '@')
+                                Push(Vars[token[1..]] ?? string.Empty); // Retrieve tempVar and push it to the stack
+                            else // `token` did not match, so it's invalid.
+                                throw new InvalidOperationException(string.Format("Unknown operator or number: `{0}`", token));
+                            break;
+                    }
                 }
             }
         }
-    }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError(ex, "Invalid operation: {Message}", ex.Message);
+            throw;
+
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogError(ex, "Argument error: {Message}", ex.Message);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while parsing the expression: {Message}", ex.Message);
+            throw;
+        }
 
     /// <summary>
     /// <para>Finalizer for the RPN class.</para>
