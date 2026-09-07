@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RPNCalc.Lib/RPNCalc.Lib.csproj" />
+  </Folder>
+</Solution>
