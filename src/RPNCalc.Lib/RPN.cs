@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using System.Text;
 
 namespace RPNCalc.Lib;
 
@@ -9,8 +11,15 @@ namespace RPNCalc.Lib;
 /// <remarks>
 /// <para>This calculator implements the Reverse Polish Notation (RPN) logic for evaluating mathematical expressions.</para>
 /// </remarks>
-public class RPN(bool debug = false)
+public class RPN(bool debug = false, ILogger<RPN>? logger = null)
 {
+    /// <summary>
+    /// <para>Logger for the RPN class.</para>
+    /// <para>Defaults to null logging via <see cref="NullLogger{T}"/> if 
+    /// an <see cref="ILogger"/> instance is not provided in the constructor.</para>
+    /// </summary>
+    private ILogger<RPN> _logger = logger ?? NullLogger<RPN>.Instance;
+
     /// <summary>
     /// <para>The main stack. Numbers and operators go here.</para>
     /// </summary>
