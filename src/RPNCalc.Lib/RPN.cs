@@ -5,43 +5,42 @@ namespace RPNCalc.Lib;
 /// <summary>
 /// <para>A Reverse Polish Notation (RPN) calculator.</para>
 /// </summary>
+/// <param name="debug">If true, enables debug mode for the calculator.</param>
 /// <remarks>
 /// <para>This calculator implements the Reverse Polish Notation (RPN) logic for evaluating mathematical expressions.</para>
+/// <para>This class implements <see cref="IDisposable"/> to blank <see cref="Stack"/> and <see cref="Vars"/> on disposal.</para>
 /// </remarks>
-public sealed class RPN : IDisposable
+public class RPN(bool debug = false) : IDisposable
 {
+    /// <summary>
+    /// <para>Indicates whether the object has been disposed.</para>
+    /// </summary>
+    private bool _disposed;
+
     /// <summary>
     /// <para>The main stack. Numbers and operators go here.</para>
     /// </summary>
-    private Stack<string> Stack { get; set; }
+    private Stack<string> Stack { get; set; } = new();
     /// <summary>
     /// <para>A Dictionary used to hold temporary variables for advanced processing.</para>
     /// <para>Example: <c>Vars.Add(tempVarName, tempVarValue);</c></para>
     /// </summary>
-    private Dictionary<string, string> Vars { get; set; }
+    private Dictionary<string, string> Vars { get; set; } = [];
 
     /// <summary>
     /// <para>Debug info about the stack.</para>
     /// </summary>
-    public string StackDumpInfo { get; set; }
+    public string StackDumpInfo { get; set; } = "STACK:\n";
     /// <summary>
     /// <para>Debug info about temporary variables.</para>
     /// </summary>
-    public string VarDumpInfo { get; set; }
-
-    public RPN()
-    {
-        Stack = new();
-        Vars = [];
-        StackDumpInfo = "STACK:\n";
-        VarDumpInfo = "TEMP VARS:\n";
-    }
+    public string VarDumpInfo { get; set; } = "TEMP VARS:\n";
 
     /// <summary>
-    /// <para>Clears both <see cref="Stack"/> and <see cref="Vars"/> on Dispose.</para>
+    /// <para>Indicates whether debug mode is enabled.</para>
     /// </summary>
-    public void Dispose() => Wipe();
-
+    public bool Debug => debug;
+        
     /// <summary>
     /// <para>Inserts a value at the top of <see cref="Stack"/>.</para>
     /// </summary>
@@ -259,6 +258,41 @@ public sealed class RPN : IDisposable
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// <para>Disposes of the resources used by the RPN class.</para>
+    /// </summary>
+    /// <param name="disposing"><para><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</para></param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+
+        if (disposing)
+        {
+            Wipe();
+        }
+
+        _disposed = true;
+    }
+
+    /// <summary>
+    /// <para>Finalizer for the RPN class.</para>
+    /// </summary>
+    ~RPN()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+    }
+
+    /// <summary>
+    /// <para>Disposes of the resources used by the RPN class.</para>
+    /// </summary>
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 }
 
