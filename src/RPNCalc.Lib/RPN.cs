@@ -13,6 +13,7 @@ namespace RPNCalc.Lib;
 /// </remarks>
 public class RPN(bool debug = false, ILogger<RPN>? logger = null)
 {
+    #region Constructors and Destructors
 
     /// <summary>
     /// <para>Initializes a new instance of the <see cref="RPN"/> class with debug mode disabled and no logger.</para>
@@ -30,13 +31,23 @@ public class RPN(bool debug = false, ILogger<RPN>? logger = null)
     {
         Wipe();
     }
+    #endregion
 
+    #region Private Fields
     /// <summary>
     /// <para>Logger for the RPN class.</para>
     /// <para>Defaults to null logging via <see cref="NullLogger{T}"/> if 
     /// an <see cref="ILogger"/> instance is not provided in the constructor.</para>
     /// </summary>
     private readonly ILogger<RPN> _logger = logger ?? NullLogger<RPN>.Instance;
+
+    /// <summary>
+    /// <para>Indicates whether debug mode is enabled.</para>
+    /// </summary>
+    private readonly bool Debug = debug;
+    #endregion
+
+    #region Private Properties
 
     /// <summary>
     /// <para>The main stack. Numbers and operators go here.</para>
@@ -48,6 +59,10 @@ public class RPN(bool debug = false, ILogger<RPN>? logger = null)
     /// </summary>
     private Dictionary<string, string> Vars { get; set; } = [];
 
+    #endregion
+
+    #region Public Properties
+
     /// <summary>
     /// <para>Debug info about the stack.</para>
     /// </summary>
@@ -57,10 +72,9 @@ public class RPN(bool debug = false, ILogger<RPN>? logger = null)
     /// </summary>
     public string VarDumpInfo { get; set; } = "TEMP VARS:\n";
 
-    /// <summary>
-    /// <para>Indicates whether debug mode is enabled.</para>
-    /// </summary>
-    public readonly bool Debug = debug;    
+    #endregion
+
+    #region Public Methods
 
     /// <summary>
     /// <para>Inserts a value at the top of <see cref="Stack"/>.</para>
@@ -298,6 +312,7 @@ public class RPN(bool debug = false, ILogger<RPN>? logger = null)
             _logger.LogError(ex, "An error occurred while parsing the expression: {Message}", ex.Message);
             throw;
         }
-    }    
-}
+    }
 
+    #endregion
+}
