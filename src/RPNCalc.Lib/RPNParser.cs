@@ -11,23 +11,23 @@ namespace RPNCalc.Lib;
 /// <remarks>
 /// <para>This calculator implements the Reverse Polish Notation (RPN) logic for evaluating mathematical expressions.</para>
 /// </remarks>
-public class RPN(bool debug = false, ILogger<RPN>? logger = null)
+public class RPNParser(bool debug = false, ILogger<RPNParser>? logger = null)
 {
     #region Constructors and Destructors
 
     /// <summary>
-    /// <para>Initializes a new instance of the <see cref="RPN"/> class with debug mode disabled and no logger.</para>
+    /// <para>Initializes a new instance of the <see cref="RPNParser"/> class with debug mode disabled and no logger.</para>
     /// </summary>
-    public RPN() : this(false, null)
+    public RPNParser() : this(false, null)
     { }
 
     /// <summary>
-    /// <para>Destructor for the <see cref="RPN"/> class.</para>
+    /// <para>Destructor for the <see cref="RPNParser"/> class.</para>
     /// </summary>
     /// <remarks>
-    /// <para>Blanks <see cref="Stack"/> and <see cref="Vars"/> when <see cref="RPN"/> is finalized.</para>
+    /// <para>Blanks <see cref="Stack"/> and <see cref="Vars"/> when <see cref="RPNParser"/> is finalized.</para>
     /// </remarks>
-    ~RPN()
+    ~RPNParser()
     {
         Wipe();
     }
@@ -39,7 +39,7 @@ public class RPN(bool debug = false, ILogger<RPN>? logger = null)
     /// <para>Defaults to null logging via <see cref="NullLogger{T}"/> if 
     /// an <see cref="ILogger"/> instance is not provided in the constructor.</para>
     /// </summary>
-    private readonly ILogger<RPN> _logger = logger ?? NullLogger<RPN>.Instance;
+    private readonly ILogger<RPNParser> _logger = logger ?? NullLogger<RPNParser>.Instance;
 
     /// <summary>
     /// <para>Indicates whether debug mode is enabled.</para>
