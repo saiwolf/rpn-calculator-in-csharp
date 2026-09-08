@@ -4,4 +4,5 @@
     <File Path="README.md" />
   </Folder>
   <Project Path="src/RPNCalc.Lib/RPNCalc.Lib.csproj" />
+  <Project Path="tests/RPN.Calc.Tests/RPN.Calc.Tests.csproj" />
 </Solution>
