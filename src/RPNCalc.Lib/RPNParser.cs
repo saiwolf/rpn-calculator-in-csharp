@@ -8,6 +8,7 @@ namespace RPNCalc.Lib;
 /// <para>A Reverse Polish Notation (RPN) calculator.</para>
 /// </summary>
 /// <param name="debug">If true, enables debug mode for the calculator.</param>
+/// <param name="logger">Optional logger.</param>
 /// <remarks>
 /// <para>This calculator implements the Reverse Polish Notation (RPN) logic for evaluating mathematical expressions.</para>
 /// </remarks>
