@@ -9,5 +9,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.11" />
   </ItemGroup>
+	
+  <ItemGroup>
+	  <InternalsVisibleTo Include="RPN.Calc.Tests" />
+  </ItemGroup>
 
 </Project>

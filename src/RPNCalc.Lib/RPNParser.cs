@@ -13,7 +13,7 @@ namespace RPNCalc.Lib;
 /// </remarks>
 public class RPNParser(bool debug = false, ILogger<RPNParser>? logger = null)
 {
-    #region Constructors and Destructors
+    #region Constructors and Destructor
 
     /// <summary>
     /// <para>Initializes a new instance of the <see cref="RPNParser"/> class with debug mode disabled and no logger.</para>
@@ -31,6 +31,7 @@ public class RPNParser(bool debug = false, ILogger<RPNParser>? logger = null)
     {
         Wipe();
     }
+
     #endregion
 
     #region Private Fields
@@ -78,6 +79,130 @@ public class RPNParser(bool debug = false, ILogger<RPNParser>? logger = null)
     #endregion
 
     #region Public Methods
+
+    /// <summary>
+    /// <para>Parses a Reverse Polish Notation Equation and calculates the result.</para>
+    /// </summary>
+    /// <param name="expression">Equation in RPN format to parse</param>
+    /// <exception cref="ArgumentException">Thrown when the expression is null or empty.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when an invalid operation is encountered.</exception>
+    /// <exception cref="Exception">Thrown when an unexpected error occurs.</exception>
+    public void Parse(string expression)
+    {
+        try
+        {
+            ArgumentException.ThrowIfNullOrEmpty(expression, nameof(expression));
+
+            // Break up the expression into an array
+            // using a space as the delimiter.
+            string[] tokens = expression.Split(' ');
+            // If there are no tokens, then print a message
+            // abort.
+            if (tokens.Length == 0)
+            {
+                // Log a message and abort.
+                throw new InvalidOperationException("No tokens found in the expression.");
+            }
+
+            // Iterate over the expression array created above.
+            foreach (string token in tokens)
+            {
+                if (double.TryParse(token, out double result))
+                {
+                    if (tokens.Last() == result.ToString())
+                        throw new InvalidOperationException("Invalid last token. The last token in the expression must be an operator.");
+                    else
+                        MemoryStack.Push(result.ToString());
+                }
+                else
+                {
+                    switch (token)
+                    {
+                        case "x" or "X":
+                            Exchange();
+                            break;
+                        case "?":
+                            StackDump();
+                            break;
+                        case "&":
+                            VarDump();
+                            break;
+                        case "+":
+                            Add();
+                            break;
+                        case "-":
+                            Sub();
+                            break;
+                        case "*":
+                            Mul();
+                            break;
+                        case "/":
+                            Div();
+                            break;
+                        case "^":
+                            Exponent();
+                            break;
+                        default:
+                            if (token[0] == '!')
+                                TempVars.Add(token[1..], Peek()); // Store top of stack in tempVar
+                            else if (token[0] == '@')
+                                Push(TempVars[token[1..]] ?? string.Empty); // Retrieve tempVar and push it to the stack
+                            else // `token` did not match, so it's invalid.
+                                throw new InvalidOperationException(string.Format("Unknown operator or number: `{0}`", token));
+                            break;
+                    }
+                }
+            }
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError(ex, "Invalid operation: {Message}", ex.Message);
+            throw;
+
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogError(ex, "Argument error: {Message}", ex.Message);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while parsing the expression: {Message}", ex.Message);
+            throw;
+        }
+    }
+
+    #region Utility Methods
+
+    /// <summary>
+    /// <para>
+    /// Returns the value at the top of <see cref="MemoryStack"/> without removing it.
+    /// </para>
+    /// </summary>
+    /// <returns>The value at the top of <see cref="MemoryStack"/>.</returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    public string Peek()
+    {
+        try
+        {
+            string value = MemoryStack.Peek();
+            if (Debug && _logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug("Peeking at the stack. Value: {Value}", value);
+            }
+            return value;
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError(ex, "Attempted to peek at an empty stack: {Message}", ex.Message);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unexpected error occurred while peeking at the stack: {Message}", ex.Message);
+            throw;
+        }
+    }
 
     /// <summary>
     /// <para>Inserts a value at the top of <see cref="MemoryStack"/>.</para>
@@ -136,6 +261,101 @@ public class RPNParser(bool debug = false, ILogger<RPNParser>? logger = null)
             throw;
         }
     }
+
+    /// <summary>
+    /// <para>Exchanges the position of the first two values on <see cref="MemoryStack"/>.</para>
+    /// </summary>
+    /// <remarks>
+    /// <para>If <see cref="MemoryStack"/> had <c>10, 2</c>, then <see cref="Exchange"/> would change this
+    /// to <c>2, 10</c></para>
+    /// </remarks>
+    /// <exception cref="ArgumentException">Thrown when an argument is empty or null.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when there are not enough values on the stack to exchange.</exception>
+    /// <exception cref="Exception">Thrown when an unexpected error occurs.</exception>
+    public void Exchange()
+    {
+        try
+        {
+            string t = Pop();
+            string t1 = Pop();
+            Push(t);
+            Push(t1);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogError(ex, "Argument is empty or null while exchanging values on the stack: {Message}", ex.Message);
+            throw;
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError(ex, "Not enough values on the stack to exchange: {Message}", ex.Message);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unexpected error occurred while exchanging values on the stack: {Message}", ex.Message);
+            throw;
+        }
+    }
+
+    #endregion
+
+    #region Debug Methods
+
+    /// <summary>
+    /// <para>Prints the contents of <see cref="MemoryStack"/> to standard output.</para>
+    /// </summary>
+    public void StackDump()
+    {
+        if (MemoryStack.Count != 0)
+        {
+            StringBuilder sb = new();
+            sb.Append("{\n");
+            foreach ((string value, int index) in MemoryStack.WithIndex())
+                sb.Append($"  Stack[{index}] = {value}\n");
+            sb.Append("}\n");
+            StackDumpInfo = StackDumpInfo += sb.ToString();
+        }
+    }
+
+    /// <summary>
+    /// <para>Prints the contents of <see cref="TempVars"/> to standard output.</para>
+    /// </summary>
+    public void VarDump()
+    {
+        if (TempVars.Count != 0)
+        {
+            StringBuilder sb = new();
+            sb.Append("{\n");
+            foreach ((string key, string value) in TempVars)
+                sb.Append($"  Key: {key} = {value}");
+            sb.Append("}\n");
+            VarDumpInfo = VarDumpInfo += sb.ToString();
+        }
+    }
+
+    #endregion
+
+    #region Cleanup Methods
+
+    /// <summary>
+    /// <para>Removes all values from <see cref="MemoryStack"/>.</para>
+    /// </summary>
+    public void Clear() => MemoryStack.Clear();
+
+    /// <summary>
+    /// <para>Removes all values from <see cref="MemoryStack"/>.</para>
+    /// <para>Removes all values from <see cref="TempVars"/>.</para>
+    /// </summary>
+    public void Wipe()
+    {
+        Clear();
+        TempVars.Clear();
+    }
+
+    #endregion
+
+    #region Operation Methods
 
     /// <summary>
     /// <para>Adds the first two values on <see cref="MemoryStack"/> and
@@ -242,210 +462,7 @@ public class RPNParser(bool debug = false, ILogger<RPNParser>? logger = null)
         Push(result.ToString());
     }
 
-    /// <summary>
-    /// <para>
-    /// Returns the value at the top of <see cref="MemoryStack"/> without removing it.
-    /// </para>
-    /// </summary>
-    /// <returns>The value at the top of <see cref="MemoryStack"/>.</returns>
-    /// <exception cref="InvalidOperationException"></exception>
-    public string Peek()
-    {
-        try
-        {
-            string value = MemoryStack.Peek();
-            if (Debug && _logger.IsEnabled(LogLevel.Debug))
-            {
-                _logger.LogDebug("Peeking at the stack. Value: {Value}", value);
-            }
-            return value;
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogError(ex, "Attempted to peek at an empty stack: {Message}", ex.Message);
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "An unexpected error occurred while peeking at the stack: {Message}", ex.Message);
-            throw;
-        }
-    }
-
-    /// <summary>
-    /// <para>Prints the contents of <see cref="MemoryStack"/> to standard output.</para>
-    /// </summary>
-    public void StackDump()
-    {
-        if (MemoryStack.Count != 0)
-        {
-            StringBuilder sb = new();
-            sb.Append("{\n");
-            foreach ((string value, int index) in MemoryStack.WithIndex())
-                sb.Append($"  Stack[{index}] = {value}\n");
-            sb.Append("}\n");
-            StackDumpInfo = StackDumpInfo += sb.ToString();
-        }
-    }
-
-    /// <summary>
-    /// <para>Prints the contents of <see cref="TempVars"/> to standard output.</para>
-    /// </summary>
-    public void VarDump()
-    {
-        if (TempVars.Count != 0)
-        {
-            StringBuilder sb = new();
-            sb.Append("{\n");
-            foreach ((string key, string value) in TempVars)
-                sb.Append($"  Key: {key} = {value}");
-            sb.Append("}\n");
-            VarDumpInfo = VarDumpInfo += sb.ToString();
-        }
-    }
-
-    /// <summary>
-    /// <para>Removes all values from <see cref="MemoryStack"/>.</para>
-    /// </summary>
-    public void Clear() => MemoryStack.Clear();
-
-    /// <summary>
-    /// <para>Removes all values from <see cref="MemoryStack"/>.</para>
-    /// <para>Removes all values from <see cref="TempVars"/>.</para>
-    /// </summary>
-    public void Wipe()
-    {
-        Clear();
-        TempVars.Clear();
-    }
-
-    /// <summary>
-    /// <para>Exchanges the position of the first two values on <see cref="MemoryStack"/>.</para>
-    /// </summary>
-    /// <remarks>
-    /// <para>If <see cref="MemoryStack"/> had <c>10, 2</c>, then <see cref="Exchange"/> would change this
-    /// to <c>2, 10</c></para>
-    /// </remarks>
-    /// <exception cref="ArgumentException">Thrown when an argument is empty or null.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when there are not enough values on the stack to exchange.</exception>
-    /// <exception cref="Exception">Thrown when an unexpected error occurs.</exception>
-    public void Exchange()
-    {
-        try
-        {
-            string t = Pop();
-            string t1 = Pop();
-            Push(t);
-            Push(t1);
-        }
-        catch (ArgumentException ex)
-        {
-            _logger.LogError(ex, "Argument is empty or null while exchanging values on the stack: {Message}", ex.Message);
-            throw;
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogError(ex, "Not enough values on the stack to exchange: {Message}", ex.Message);
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "An unexpected error occurred while exchanging values on the stack: {Message}", ex.Message);
-            throw;
-        }
-    }
-
-    /// <summary>
-    /// <para>Parses a Reverse Polish Notation Equation and calculates the result.</para>
-    /// </summary>
-    /// <param name="expression">Equation in RPN format to parse</param>
-    /// <exception cref="ArgumentException">Thrown when the expression is null or empty.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when an invalid operation is encountered.</exception>
-    /// <exception cref="Exception">Thrown when an unexpected error occurs.</exception>
-    public void Parse(string expression)
-    {
-        try
-        {
-            ArgumentException.ThrowIfNullOrEmpty(expression, nameof(expression));
-
-            // Break up the expression into an array
-            // using a space as the delimiter.
-            string[] tokens = expression.Split(' ');
-            // If there are no tokens, then print a message
-            // abort.
-            if (tokens.Length == 0)
-            {
-                // Log a message and abort.
-                throw new InvalidOperationException("No tokens found in the expression.");
-            }
-
-            // Iterate over the expression array created above.
-            foreach (string token in tokens)
-            {
-                if (double.TryParse(token, out double result))
-                {
-                    if (tokens.Last() == result.ToString())
-                        throw new InvalidOperationException("Invalid last token. The last token in the expression must be an operator.");
-                    else
-                        MemoryStack.Push(result.ToString());
-                }
-                else
-                {
-                    switch (token)
-                    {
-                        case "x" or "X":
-                            Exchange();
-                            break;
-                        case "?":
-                            StackDump();
-                            break;
-                        case "&":
-                            VarDump();
-                            break;
-                        case "+":
-                            Add();
-                            break;
-                        case "-":
-                            Sub();
-                            break;
-                        case "*":
-                            Mul();
-                            break;
-                        case "/":
-                            Div();
-                            break;
-                        case "^":
-                            Exponent();
-                            break;
-                        default:
-                            if (token[0] == '!')
-                                TempVars.Add(token[1..], Peek()); // Store top of stack in tempVar
-                            else if (token[0] == '@')
-                                Push(TempVars[token[1..]] ?? string.Empty); // Retrieve tempVar and push it to the stack
-                            else // `token` did not match, so it's invalid.
-                                throw new InvalidOperationException(string.Format("Unknown operator or number: `{0}`", token));
-                            break;
-                    }
-                }
-            }
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogError(ex, "Invalid operation: {Message}", ex.Message);
-            throw;
-
-        }
-        catch (ArgumentException ex)
-        {
-            _logger.LogError(ex, "Argument error: {Message}", ex.Message);
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "An error occurred while parsing the expression: {Message}", ex.Message);
-            throw;
-        }
-    }
+    #endregion
 
     #endregion
 }
