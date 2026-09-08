@@ -1,15 +1,27 @@
-﻿using RPNCalc.Lib;
+﻿using Microsoft.Extensions.Logging;
+using RPN.Calc.Tests.Logging;
+using RPNCalc.Lib;
 
 namespace RPN.Calc.Tests;
 
 [TestClass]
-public sealed class BasicOperationTests
+public class BasicOperationTests
 {
+    private static readonly TestContextLoggerFactory LoggerFactory = new(LogLevel.Debug);
+
+    public TestContext TestContext { get; set; } = null!;
+
+    [TestInitialize]
+    public void TestInitialize()
+    {
+        LoggerFactory.Provider.CurrentTestContext = TestContext;
+    }
+
     [TestMethod]
     public void BasicNotationParsing()
     {
         // Arrange
-        RPNParser rpn = new();
+        RPNParser rpn = new(debug: true, logger: LoggerFactory.CreateLogger<RPNParser>());
 
         // Act
         rpn.Parse("5 2 + -3 - 10 +"); // (5 + 2) - (-3) + 10 = 20
