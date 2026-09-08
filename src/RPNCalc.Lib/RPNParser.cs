@@ -148,11 +148,6 @@ public class RPNParser(bool debug = false, ILogger<RPNParser>? logger = null)
     {
         try
         {
-            if (MemoryStack.Count < 3)
-            {
-                throw new InvalidOperationException("Not enough values on the stack to perform addition.");
-            }
-
             string left = Pop();
             string right = Pop();
 
